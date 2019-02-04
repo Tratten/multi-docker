@@ -1,0 +1,24 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  # You may build test images for nginx/server/worker as well
+  - docker build -t tratten/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  # You may run tests on nginx/server/worker as well
+  - docker run tratten/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t tratten/multi-client ./client
+  - docker build -t tratten/multi-nginx ./nginx
+  - docker build -t tratten/multi-server ./server
+  - docker build -t tratten/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take these images and push them to Docker Hub
+  - docker push tratten/multi-client
+  - docker push tratten/multi-nginx
+  - docker push tratten/multi-server
+  - docker push tratten/multi-worker
